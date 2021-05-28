@@ -27,6 +27,16 @@ public class TaskRestController {
         return ResponseEntity.of(taskService.getTask(taskId));
     }
 
+    @GetMapping(value = "/tasks")
+    Page<Task> getTasks(Pageable pageable) {
+        return taskService.getTasks(pageable);
+    }
+
+    @GetMapping(value = "/tasks", params="projectId")
+    Page<Task> getTasksByProjectId(@RequestParam Integer projectId, Pageable pageable) {
+        return taskService.findTasksByProjectId(projectId, pageable);
+    }
+
     @PostMapping(path = "/tasks")
     ResponseEntity<Void> createTask(@Valid @RequestBody Task task) {
         Task createdTask = taskService.setTask(task);
@@ -38,28 +48,27 @@ public class TaskRestController {
     @PutMapping("/tasks/{taskId}")
     public ResponseEntity<Void> updateTask(@Valid @RequestBody Task task, @PathVariable Integer taskId) {
         return taskService.getTask(taskId)
-                .map(p -> {
-                    taskService.setTask(task);
+                .map(t -> {
+                    updateTaskFields(t, task);
+                    taskService.setTask(t);
                     return new ResponseEntity<Void>(HttpStatus.OK);
                 })
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    private void updateTaskFields(Task persistedTask, Task updatedTask) {
+        persistedTask.setName(updatedTask.getName());
+        persistedTask.setNumberInSequence(updatedTask.getNumberInSequence());
+        persistedTask.setDescription(updatedTask.getDescription());
+    }
+
     @DeleteMapping("/tasks/{taskId}")
     public ResponseEntity<Void> deleteTask(@PathVariable Integer taskId) {
-        return taskService.getTask(taskId).map(p -> {
-            taskService.deleteTask(taskId);
-            return new ResponseEntity<Void>(HttpStatus.OK);
-        }).orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
-    @GetMapping(value = "/tasks")
-    Page<Task> getTasks(Pageable pageable) {
-        return taskService.getTasks(pageable);
-    }
-
-    @GetMapping(value = "/tasks", params="projectId")
-    Page<Task> getTasksByProjectId(@RequestParam Integer projectId, Pageable pageable) {
-        return taskService.findTasksByProjectId(projectId, pageable);
+        return taskService.getTask(taskId)
+            .map(t -> {
+                taskService.deleteTask(taskId);
+                return new ResponseEntity<Void>(HttpStatus.OK);
+            })
+            .orElseGet(() -> ResponseEntity.notFound().build());
     }
 }

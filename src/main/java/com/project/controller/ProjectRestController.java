@@ -35,6 +35,16 @@ public class ProjectRestController {
         return ResponseEntity.of(projectService.getProject(projectId));
     }
 
+    @GetMapping(value = "/projects")
+    Page<Project> getProjects(Pageable pageable) {
+        return projectService.getProjects(pageable);
+    }
+
+    @GetMapping(value = "/projects", params="name")
+    Page<Project> getProjectsByName(@RequestParam String name, Pageable pageable) {
+        return projectService.searchByName(name, pageable);
+    }
+
     @PostMapping(path = "/projects")
     ResponseEntity<Void> createProject(@Valid @RequestBody Project project) {
         Project createdProject = projectService.setProject(project);
@@ -47,27 +57,26 @@ public class ProjectRestController {
     public ResponseEntity<Void> updateProject(@Valid @RequestBody Project project, @PathVariable Integer projectId) {
         return projectService.getProject(projectId)
                 .map(p -> {
-                    projectService.setProject(project);
+                    updateProjectFields(p, project);
+                    projectService.setProject(p);
                     return new ResponseEntity<Void>(HttpStatus.OK);
                 })
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    private void updateProjectFields(Project persistedProject, Project updatedProject) {
+        persistedProject.setName(updatedProject.getName());
+        persistedProject.setDescription(updatedProject.getDescription());
+        persistedProject.setHandinDate(updatedProject.getHandinDate());
+    }
+
     @DeleteMapping("/projects/{projectId}")
     public ResponseEntity<Void> deleteProject(@PathVariable Integer projectId) {
-        return projectService.getProject(projectId).map(p -> {
-            projectService.deleteProject(projectId);
-            return new ResponseEntity<Void>(HttpStatus.OK);
-        }).orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
-    @GetMapping(value = "/projects")
-    Page<Project> getProjects(Pageable pageable) {
-        return projectService.getProjects(pageable);
-    }
-
-    @GetMapping(value = "/projects", params="name")
-    Page<Project> getProjectsByName(@RequestParam String name, Pageable pageable) {
-        return projectService.searchByName(name, pageable);
+        return projectService.getProject(projectId)
+            .map(p -> {
+                projectService.deleteProject(projectId);
+                return new ResponseEntity<Void>(HttpStatus.OK);
+            })
+            .orElseGet(() -> ResponseEntity.notFound().build());
     }
 }
