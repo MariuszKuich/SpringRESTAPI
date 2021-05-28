@@ -43,82 +43,82 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.project.model.Projekt;
-import com.project.service.ProjektService;
+import com.project.model.Project;
+import com.project.service.ProjectService;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @WithMockUser(username = "admin", password = "admin")
-public class ProjektRestControllerTest {
-    private final String apiPath = "/api/projekty";
+public class ProjectRestControllerTest {
+    private final String apiPath = "/api/projecty";
 
     @MockBean
-    private ProjektService mockProjektService;
+    private ProjectService mockProjectService;
     @Autowired
     private MockMvc mockMvc;
-    private JacksonTester<Projekt> jacksonTester;
+    private JacksonTester<Project> jacksonTester;
 
     @Test
-    public void getProjekty() throws Exception {
-        Projekt projekt = new Projekt(1, "Nazwa1", "Opis1",
+    public void getProjecty() throws Exception {
+        Project project = new Project(1, "Nazwa1", "Opis1",
                 LocalDateTime.now(), LocalDate.of(2020, 6, 7));
-        Page<Projekt> page = new PageImpl<>(Collections.singletonList(projekt));
-        when(mockProjektService.getProjekty(any(Pageable.class))).thenReturn(page);
+        Page<Project> page = new PageImpl<>(Collections.singletonList(project));
+        when(mockProjectService.getProjects(any(Pageable.class))).thenReturn(page);
         mockMvc.perform(get(apiPath).contentType(MediaType.APPLICATION_JSON))
             .andDo(print())
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content[*]").exists())
             .andExpect(jsonPath("$.content.length()").value(1))
-            .andExpect(jsonPath("$.content[0].projektId").value(projekt.getProjektId()))
-            .andExpect(jsonPath("$.content[0].nazwa").value(projekt.getNazwa()));
-        verify(mockProjektService, times(1)).getProjekty(any(Pageable.class));
-        verifyNoMoreInteractions(mockProjektService);
+            .andExpect(jsonPath("$.content[0].projectId").value(project.getProjectId()))
+            .andExpect(jsonPath("$.content[0].nazwa").value(project.getName()));
+        verify(mockProjectService, times(1)).getProjects(any(Pageable.class));
+        verifyNoMoreInteractions(mockProjectService);
     }
 
     @Test
-    public void getProjekt() throws Exception {
-        Projekt projekt = new Projekt(2, "Nazwa2", "Opis2",
+    public void getProject() throws Exception {
+        Project project = new Project(2, "Nazwa2", "Opis2",
                 LocalDateTime.now(), LocalDate.of(2020, 6, 7));
-        when(mockProjektService.getProjekt(projekt.getProjektId()))
-            .thenReturn(Optional.of(projekt));
-        mockMvc.perform(get(apiPath + "/{projektId}", projekt.getProjektId()).accept(MediaType.APPLICATION_JSON))
+        when(mockProjectService.getProject(project.getProjectId()))
+            .thenReturn(Optional.of(project));
+        mockMvc.perform(get(apiPath + "/{projectId}", project.getProjectId()).accept(MediaType.APPLICATION_JSON))
             .andDo(print())
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.projektId").value(projekt.getProjektId()))
-            .andExpect(jsonPath("$.nazwa").value(projekt.getNazwa()));
-        verify(mockProjektService, times(1)).getProjekt(projekt.getProjektId());
-        verifyNoMoreInteractions(mockProjektService);
+            .andExpect(jsonPath("$.projectId").value(project.getProjectId()))
+            .andExpect(jsonPath("$.nazwa").value(project.getName()));
+        verify(mockProjectService, times(1)).getProject(project.getProjectId());
+        verifyNoMoreInteractions(mockProjectService);
     }
 
     @Test
-    public void createProjekt() throws Exception {
-        Projekt projekt = new Projekt(3, "Nazwa3", "OpisMinimum10Znakow",
+    public void createProject() throws Exception {
+        Project project = new Project(3, "Nazwa3", "OpisMinimum10Znakow",
                 null, LocalDate.of(2020, 6, 7));
-        String jsonProjekt = jacksonTester.write(projekt).getJson();
-        projekt.setProjektId(3);
-        when(mockProjektService.setProjekt(any(Projekt.class))).thenReturn(projekt);
+        String jsonProject = jacksonTester.write(project).getJson();
+        project.setProjectId(3);
+        when(mockProjectService.setProject(any(Project.class))).thenReturn(project);
         mockMvc.perform(post(apiPath)
-            .content(jsonProjekt)
+            .content(jsonProject)
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.ALL))
             .andDo(print())
             .andExpect(status().isCreated())
             .andExpect(header().string("location",
-                    containsString(apiPath + "/" + projekt.getProjektId())));
+                    containsString(apiPath + "/" + project.getProjectId())));
     }
 
     @Test
-    public void createProjektEmptyName() throws Exception {
-        Projekt projekt = new Projekt(null, "", "Opis4",
+    public void createProjectEmptyName() throws Exception {
+        Project project = new Project(null, "", "Opis4",
                 null, LocalDate.of(2020, 6, 7));
         MvcResult result = mockMvc.perform(post(apiPath)
-            .content(jacksonTester.write(projekt).getJson())
+            .content(jacksonTester.write(project).getJson())
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.ALL))
             .andDo(print())
             .andExpect(status().isBadRequest())
             .andReturn();
-        verify(mockProjektService, times(0)).setProjekt(any(Projekt.class));
+        verify(mockProjectService, times(0)).setProject(any(Project.class));
         Exception exception = result.getResolvedException();
         assertNotNull(exception);
         assertTrue(exception instanceof MethodArgumentNotValidException);
@@ -126,25 +126,25 @@ public class ProjektRestControllerTest {
     }
 
     @Test
-    public void updateProjekt() throws Exception {
-        Projekt projekt = new Projekt(5, "Nazwa5", "OpisMinimum10Znakow",
+    public void updateProject() throws Exception {
+        Project project = new Project(5, "Nazwa5", "OpisMinimum10Znakow",
                 LocalDateTime.now(), LocalDate.of(2020, 6, 7));
-        String jsonProjekt = jacksonTester.write(projekt).getJson();
-        when(mockProjektService.getProjekt(projekt.getProjektId())).thenReturn(Optional.of(projekt));
-        when(mockProjektService.setProjekt(any(Projekt.class))).thenReturn(projekt);
-        mockMvc.perform(put(apiPath + "/{projektId}", projekt.getProjektId())
-            .content(jsonProjekt)
+        String jsonProject = jacksonTester.write(project).getJson();
+        when(mockProjectService.getProject(project.getProjectId())).thenReturn(Optional.of(project));
+        when(mockProjectService.setProject(any(Project.class))).thenReturn(project);
+        mockMvc.perform(put(apiPath + "/{projectId}", project.getProjectId())
+            .content(jsonProject)
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.ALL))
             .andDo(print())
             .andExpect(status().isOk());
-        verify(mockProjektService, times(1)).getProjekt(projekt.getProjektId());
-        verify(mockProjektService, times(1)).setProjekt(any(Projekt.class));
-        verifyNoMoreInteractions(mockProjektService);
+        verify(mockProjectService, times(1)).getProject(project.getProjectId());
+        verify(mockProjectService, times(1)).setProject(any(Project.class));
+        verifyNoMoreInteractions(mockProjectService);
     }
 
     @Test
-    public void getProjektyAndVerifyPageableParams() throws Exception {
+    public void getProjectyAndVerifyPageableParams() throws Exception {
         Integer page = 5;
         Integer size = 15;
         String sortProperty = "nazwa";
@@ -155,7 +155,7 @@ public class ProjektRestControllerTest {
             .param("sort", String.format("%s,%s", sortProperty, sortDirection)))
             .andExpect(status().isOk());
         ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
-        verify(mockProjektService, times(1)).getProjekty(pageableCaptor.capture());
+        verify(mockProjectService, times(1)).getProjects(pageableCaptor.capture());
         PageRequest pageable = (PageRequest) pageableCaptor.getValue();
         assertEquals(page, pageable.getPageNumber());
         assertEquals(size, pageable.getPageSize());
