@@ -38,13 +38,6 @@ public class Projekt {
     @JsonIgnoreProperties({"projekt"})
     private List<Zadanie> zadania;
 
-    @ManyToMany
-    @JoinTable(name = "projekt_student",
-            joinColumns = {@JoinColumn(name="projekt_id")},
-            inverseJoinColumns = {@JoinColumn(name="student_id")})
-    @JsonIgnoreProperties({"projekty"})
-    private Set<Student> studenci;
-
     public Integer getProjektId() {
         return projektId;
     }
@@ -91,14 +84,6 @@ public class Projekt {
 
     public void setZadania(List<Zadanie> zadania) {
         this.zadania = zadania;
-    }
-
-    public Set<Student> getStudenci() {
-        return studenci;
-    }
-
-    public void setStudenci(Set<Student> studenci) {
-        this.studenci = studenci;
     }
 
     public Projekt() {
