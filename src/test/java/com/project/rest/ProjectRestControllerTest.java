@@ -4,10 +4,8 @@ import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -19,10 +17,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Optional;
+import org.hibernate.ObjectNotFoundException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -166,6 +166,63 @@ public class ProjectRestControllerTest {
 
         verify(mockProjectService, times(1)).getProject(project.getProjectId());
         verify(mockProjectService, times(1)).setProject(any(Project.class));
+        verifyNoMoreInteractions(mockProjectService);
+    }
+
+    @Test
+    public void addTaskToProject_getsExistingProjectIdAndTaskId_ReturnsOkStatus() throws Exception {
+        //arrange
+        when(mockProjectService.getProject(any(Integer.class))).thenReturn(Optional.of(new Project()));
+        Mockito.doNothing().when(mockProjectService).addTaskToProject(any(Project.class), any(Integer.class));
+        Integer randomInt = anyInt();
+        //act
+        mockMvc.perform(
+            put(apiPath + "/{projectId}/tasks/{taskId}", randomInt, randomInt)
+            .contentType(MediaType.APPLICATION_JSON))
+        //assert
+            .andExpect(status().isOk());
+
+        verify(mockProjectService, times(1)).getProject(any(Integer.class));
+        verify(mockProjectService, times(1)).addTaskToProject(any(Project.class), any(Integer.class));
+        verifyNoMoreInteractions(mockProjectService);
+    }
+
+    @Test
+    public void addTaskToProject_getsNonExistingProjectId_ReturnsNotFoundStatus() throws Exception {
+        //arrange
+        when(mockProjectService.getProject(any(Integer.class))).thenReturn(Optional.empty());
+        Mockito.doNothing().when(mockProjectService).addTaskToProject(any(Project.class), any(Integer.class));
+        Integer randomInt = anyInt();
+
+        //act
+        mockMvc.perform(
+            put(apiPath + "/{projectId}/tasks/{taskId}", randomInt, randomInt)
+            .contentType(MediaType.APPLICATION_JSON))
+        //assert
+            .andExpect(status().isNotFound());
+
+        verify(mockProjectService, times(1)).getProject(any(Integer.class));
+        verify(mockProjectService, times(0)).addTaskToProject(any(Project.class), any(Integer.class));
+        verifyNoMoreInteractions(mockProjectService);
+    }
+
+    @Test
+    public void addTaskToProject_getsNonExistingTaskId_ReturnsBadRequestStatus() throws Exception {
+        //arrange
+        when(mockProjectService.getProject(any(Integer.class))).thenReturn(Optional.of(new Project()));
+        Mockito.doThrow(new ObjectNotFoundException(1, ""))
+            .when(mockProjectService).addTaskToProject(any(Project.class), any(Integer.class));
+        Integer randomInt = anyInt();
+
+        //act
+        mockMvc.perform(
+            put(apiPath + "/{projectId}/tasks/{taskId}", randomInt, randomInt)
+            .contentType(MediaType.APPLICATION_JSON))
+        //assert
+            .andExpect(status().isBadRequest());
+
+        verify(mockProjectService, times(1)).getProject(any(Integer.class));
+        verify(mockProjectService, times(1)).addTaskToProject(any(Project.class), any(Integer.class));
         verifyNoMoreInteractions(mockProjectService);
     }
 
