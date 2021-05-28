@@ -2,6 +2,7 @@ package com.project.controller;
 
 import com.project.model.Project;
 import com.project.service.ProjectService;
+import org.hibernate.ObjectNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -68,6 +69,21 @@ public class ProjectRestController {
         persistedProject.setName(updatedProject.getName());
         persistedProject.setDescription(updatedProject.getDescription());
         persistedProject.setHandinDate(updatedProject.getHandinDate());
+    }
+
+    @PutMapping("/projects/{projectId}/tasks/{taskId}")
+    public ResponseEntity<Void> addTaskToProject(@PathVariable Integer projectId, @PathVariable Integer taskId) {
+        return projectService.getProject(projectId)
+                .map(p -> {
+                    try {
+                        projectService.addTaskToProject(p, taskId);
+                    }
+                    catch(ObjectNotFoundException e) {
+                        return new ResponseEntity<Void>(HttpStatus.BAD_REQUEST);
+                    }
+                    return new ResponseEntity<Void>(HttpStatus.OK);
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/projects/{projectId}")
