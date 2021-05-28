@@ -86,4 +86,11 @@ public class Task {
     public Task() {
 
     }
+
+    public Task(Integer taskId, String name, Integer numberInSequence, String description) {
+        this.taskId = taskId;
+        this.name = name;
+        this.numberInSequence = numberInSequence;
+        this.description = description;
+    }
 }

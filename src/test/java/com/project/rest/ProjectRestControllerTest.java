@@ -100,7 +100,7 @@ public class ProjectRestControllerTest {
     }
 
     @Test
-    public void createProject_getsProjectJsonInBody_returnsIsCreatedStatusAndResourceLocation() throws Exception {
+    public void createProject_getsProjectJsonInBody_returnsCreatedStatusAndResourceLocation() throws Exception {
         //arrange
         Project project = new Project(3, "TestName", "TestDescription",
                 LocalDateTime.now(), LocalDate.of(2020, 6, 7));
@@ -125,12 +125,13 @@ public class ProjectRestControllerTest {
         //arrange
         Project project = new Project(1, "", "TestDescription",
                 LocalDateTime.now(), LocalDate.of(2020, 6, 7));
+        String jsonProject = jacksonTester.write(project).getJson();
         when(mockProjectService.setProject(any(Project.class))).thenReturn(project);
 
         //act
         MvcResult result = mockMvc
             .perform(post(apiPath)
-            .content(jacksonTester.write(project).getJson())
+            .content(jsonProject)
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.ALL))
             .andDo(print())
@@ -145,7 +146,7 @@ public class ProjectRestControllerTest {
     }
 
     @Test
-    public void updateProject_getsProjectJsonInBody_returnsIsOkStatus() throws Exception {
+    public void updateProject_getsProjectJsonInBody_returnsOkStatus() throws Exception {
         //arrange
         Project project = new Project(5, "TestName", "TestDescription",
                 LocalDateTime.now(), LocalDate.of(2020, 6, 7));
